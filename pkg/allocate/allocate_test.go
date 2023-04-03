@@ -469,6 +469,53 @@ var _ = Describe("Allocation operations", func() {
 
 	})
 
+	It("can IterateForAssignment on an IPv4 address excluding a range and respect endrange value", func() {
+
+		_, ipnet, err := net.ParseCIDR("192.168.0.0/28")
+		Expect(err).NotTo(HaveOccurred())
+		startip := net.ParseIP("192.168.0.1")
+		lastip := net.ParseIP("192.168.0.6")
+
+		ipres := []types.IPReservation{
+			{
+				IP:     net.ParseIP("192.168.0.2"),
+				PodRef: "default/pod1",
+			},
+			{
+				IP:     net.ParseIP("192.168.0.3"),
+				PodRef: "default/pod1",
+			},
+		}
+		exrange := []string{"192.168.0.4/30"}
+		_, _, err = IterateForAssignment(*ipnet, startip, lastip, ipres, exrange, "0xdeadbeef", "")
+		Expect(err).To(MatchError(HavePrefix("Could not allocate IP in range")))
+
+	})
+
+	It("can IterateForAssignment on an IPv6 address excluding a range and respect endrange value", func() {
+
+		firstip, ipnet, err := net.ParseCIDR("100::2:1/124")
+		startip := net.ParseIP("100::2:1")
+		lastip := net.ParseIP("100::2:7")
+		Expect(err).NotTo(HaveOccurred())
+
+		ipres := []types.IPReservation{
+			{
+				IP:     net.ParseIP("100::2:2"),
+				PodRef: "default/pod1",
+			},
+			{
+				IP:     net.ParseIP("100::2:3"),
+				PodRef: "default/pod1",
+			},
+		}
+
+		exrange := []string{"100::2:4/126"}
+		_, _, err = IterateForAssignment(*ipnet, firstip, lastip, ipres, exrange, "0xdeadbeef", "")
+		Expect(err).To(MatchError(HavePrefix("Could not allocate IP in range")))
+
+	})
+
 	It("creates an IPv6 range properly for 96 bits network address", func() {
 
 		_, ipnet, err := net.ParseCIDR("2001:db8:abcd:0012::0/96")

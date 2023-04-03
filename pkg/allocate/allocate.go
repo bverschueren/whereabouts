@@ -1,6 +1,7 @@
 package allocate
 
 import (
+	"bytes"
 	"fmt"
 	"math"
 	"net"
@@ -209,8 +210,7 @@ func IterateForAssignment(ipnet net.IPNet, rangeStart net.IP, rangeEnd net.IP, r
 	// Iterate every IP address in the range
 	var assignedip net.IP
 	performedassignment := false
-	endip := IPAddOffset(lastip, uint64(1))
-	for i := firstip; ipnet.Contains(i) && !i.Equal(endip); i = IPAddOffset(i, uint64(1)) {
+	for i := firstip; ipnet.Contains(i) && IsIPWithin(i, firstip, lastip); i = IPAddOffset(i, uint64(1)) {
 		// if already reserved, skip it
 		if reserved[i.String()] {
 			continue
@@ -303,6 +303,10 @@ func GetIPRange(ip net.IP, ipnet net.IPNet) (net.IP, net.IP, error) {
 	lastIP := net.IP(lastIPbyte).To16()
 
 	return firstIP, lastIP, nil
+}
+
+func IsIPWithin(in net.IP, start net.IP, end net.IP) bool {
+	return bytes.Compare(in, start) >= 0 && bytes.Compare(in, end) <= 0
 }
 
 // IsIPv4 checks if an IP is v4.
